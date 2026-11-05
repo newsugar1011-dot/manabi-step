@@ -53,6 +53,12 @@
 @media(prefers-reduced-motion:reduce){.reward-gain{animation:none}.reward-fill{transition:none}}
 @media(max-width:480px){.reward-panel{padding:18px}.reward-main{gap:9px;margin:14px 0}.reward-metric{padding:10px}.reward-metric strong{font-size:1.62rem}.reward-between{font-size:.78rem}}
 
+/* v4.1：正誤は選択肢の○×で確認。大きな不正解バナーを削除 */
+.feedback.bad{background:#f4f8f7;border-color:#d5e4e0}
+.choice.wrong{background:#fff7f1;border:1.5px solid #d8a58c;color:#68564f}
+.choice-mark.wrong-mark{background:#b9836c}
+.explanation-heading{font-size:1.05rem;font-weight:800;color:var(--deep);margin:0 0 13px;padding:0 0 7px;border-bottom:1px solid #dce9e8}
+
 </style>
   
   
@@ -177,7 +183,7 @@ window.MANABI_DATA = {"version":"2026-11-05-v1","note":"試験範囲に基づく
     app.innerHTML=`<div class="quiz-top"><div class="flex between"><span class="pill">${SUBJECTS[session.sub]}・${escape(q.cat)}</span><span class="quiz-progress">${session.current+1} / ${session.ids.length}　⭐ ${pointStats().points} pt</span></div><div class="progress-track" style="margin-top:13px"><div class="progress-fill" style="width:${progress}%"></div></div></div>
     <section class="card question-card"><p class="subtle tiny">${q.kind==='image'?'🖼️ 作品画像問題':'📝 四択問題'}</p><h1 class="question-title">${escape(q.q)}</h1>${q.kind==='image'?picture(q.image,false):''}${q.graph?graphPlot(q.graph):''}
     <div class="answer-grid" role="group" aria-label="選択肢">${(session.options[q.id]||q.options).map((o,i)=>`<button type="button" class="choice ${answered?(o===q.answer?'correct':o===selected?'wrong':''):''}" ${answered?'disabled':''} data-action="answer" data-answer="${escape(o)}"><span class="key">${'ABCD'[i]}</span><span>${escape(o)}</span>${answered&&o===q.answer?' <span class="choice-mark" aria-label="正解">○</span>':answered&&o===selected?' <span class="choice-mark wrong-mark" aria-label="選んだ不正解">×</span>':''}</button>`).join('')}</div>
-    ${answered?`<div class="feedback ${selected===q.answer?'':'bad'}"><div id="answerJudgement" class="judgement ${selected===q.answer?'':'bad'}" role="status" aria-live="polite"><span class="judgement-symbol" aria-hidden="true">${selected===q.answer?'○':'×'}</span><div><strong>${selected===q.answer?'正解！':'不正解'}</strong><span class="judgement-note">${selected===q.answer?'その調子！':'正しい答えを確認しよう'}</span></div></div>${selected!==q.answer?`<p class="answer-detail">あなたの回答：<strong>${escape(selected)}</strong></p>`:''}<p class="answer-detail"><strong>正しい答え：${escape(q.answer)}</strong></p>
+    ${answered?`<div class="feedback ${selected===q.answer?'':'bad'}"><h3 id="answerExplanation" class="explanation-heading" role="status" aria-live="polite">答えと解説</h3>${selected!==q.answer?`<p class="answer-detail">あなたの回答：<strong>${escape(selected)}</strong></p>`:''}<p class="answer-detail"><strong>正しい答え：${escape(q.answer)}</strong></p>
     ${(session.pointGains?.[q.id]||0)>0?`<div class="reward-gain ${session.missionUnlockedAt===q.id?'mission':''}">⭐ +${session.pointGains[q.id]} pt 獲得！</div>`:answered&&selected===q.answer?'<p class="tiny subtle">この問題は今日のポイント獲得済み。復習もえらい！</p>':''}
     ${session.missionUnlockedAt===q.id?'<p class="reward-help">🎯 今日の10問ミッション達成！ +3 pt を含みます。</p>':''}
     ${session.rewardUnlockedAt===q.id?'<div class="reward-unlock"><strong>🎉 報酬獲得！</strong>100 pt到達！ よく頑張ったね！</div>':''}
@@ -196,7 +202,7 @@ window.MANABI_DATA = {"version":"2026-11-05-v1","note":"試験範囲に基づく
     if(!before.missionDone&&after.missionDone)session.missionUnlockedAt=q.id;
     if(after.rewards>before.rewards)session.rewardUnlockedAt=q.id;
     state.session=session;save();quiz();
-    requestAnimationFrame(()=>{document.querySelector('#answerJudgement')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'})});
+    requestAnimationFrame(()=>{document.querySelector('#answerExplanation')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'})});
   }
   function confidence(key){const id=session.ids[session.current];session.confidence[id]=key;for(let i=state.records.length-1;i>=0;i--){if(state.records[i].id===id){state.records[i].confidence=key;break}}save();quiz()}
   function next(){const q=questionMap[session.ids[session.current]];if(!Object.hasOwn(session.answers,q.id))return;if(session.current>=session.ids.length-1){session.done=true;state.session=null;save();results()}else{session.current++;save();quiz()}window.scrollTo({top:0,behavior:'smooth'})}
